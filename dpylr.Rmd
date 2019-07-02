@@ -1,0 +1,106 @@
+---
+title: "dplyr summary"
+author: "Gordon Tang"
+date: "7/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+When working with data you must:
+Figure out what you want to do.
+Describe those tasks in the form of a computer program.
+Execute the program.
+
+The dplyr package makes these steps fast and easy:
+By constraining your options, it helps you think about your data manipulation challenges.	
+It provides simple “verbs”, functions that correspond to the most common data manipulation tasks, to help you translate your thoughts into code.
+It uses efficient backends, so you spend less time waiting for the computer.
+
+This document introduces you to dplyr’s basic set of tools, and shows you how to apply them to data frames. 
+
+```{r}
+library(dplyr)
+
+# Next we install the package nycflights13, contains data on all flights that departed New York City in 2013
+library(nycflights13)
+
+# Use the dim function to see the dimensons of the data frame
+dim(flights)
+
+# The head() function displays the top 6 rows of the data frame
+head(flights)
+
+# Here are the basic data manipulation operations in dplyr
+
+# filter() to select rows based on attribute values.
+# arrange() to reorder the rows, based on specified criteria.
+# select() and rename() to select variables based on their names.
+# mutate() and transmute() to add new variables that are functions of existing variables.
+# summarise() to condense multiple values to a single value.
+# sample_n() and sample_frac() to take random samples of the data set.
+
+filter(flights, month == 1, day == 1)
+arrange(flights, year, month, day)
+
+# The following arranges the data frame in descending order of arr_delays
+arrange(flights, desc(arr_delay))
+
+# Here are two ways of selecting just the year, month and day columns
+select(flights, year, month, day)
+select(flights, year:day)
+
+# Here we select all but the year, month and day columns
+select(flights, -(year:day))
+
+# rename keeps all the columns, changing the name of the column tailnum to tail_num
+rename(flights, tail_num = tailnum)
+
+# mutate allows you to add new columns (variables) that are functions of existing columns (variables)
+mutate(flights, 
+       gain = arr_delay - dep_delay,
+       speed = distance / air_time * 60
+       )
+
+# Use transmute if you only want to keep the new variaables
+transmute(flights,
+          gain = arr_delay - dep_delay,
+          gain_per_hour = gain / (air_time / 60)
+          )
+
+# summarize allows you to collapse a data frame into a single row
+summarise(flights,
+          delay = mean(dep_delay, na.rm = TRUE)
+          )
+
+# Here is a summarization of the the number of flights per year, per month and per day, respectively
+daily <- group_by(flights, year, month, day)
+(per_day <- summarise(daily, flights = n()))
+(per_month <- summarize(per_day, flights = sum(flights)))
+(per_year <- summarise(per_month, flights = sum(flights)))
+
+# sample_n and sample_frac allow you to random sample a fixed number of rows or a fixed fraction of rows, respectively
+sample_n(flights, 10)
+sample_frac(flights, 0.01)
+
+# The function group_by breaks down a data frame into groups of rows, than apply data operations "by group"
+by_tailnum <- group_by(flights, tailnum)
+
+delay <- summarise(by_tailnum,
+                   count = n(),
+                   dist = mean(distance, na.rm = TRUE),
+                   delay = mean(arr_delay, na.rm = TRUE))
+
+delay <- filter(delay, count > 20, dist < 2000)
+
+# Now, here is a summarization of the number of planes and the number of flights by destination
+destinations <- group_by(flights, dest)
+summarise(destinations,
+          planes = n_distinct(tailnum),
+          flights = n())
+
+```
