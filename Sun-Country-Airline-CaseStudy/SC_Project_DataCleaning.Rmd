@@ -1,5 +1,5 @@
 ---
-title: "SC_Project"
+title: "SC_Project_DataCleaning"
 author: "Gordon Tang"
 date: "7/2/2019"
 output:
